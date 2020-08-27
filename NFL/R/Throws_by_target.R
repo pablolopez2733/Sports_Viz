@@ -4,6 +4,8 @@ library(nflfastR)
 library(ggrepel)
 library(ggimage)
 library(nflfastR)
+library(ggdark)
+library(here)
 
 seasons <- 2019
 pbp <- purrr::map_df(seasons, function(x) {
@@ -43,41 +45,52 @@ qbs <- qbs %>%
          WR_per = WR/n_dropbacks
            )
 
+qbs <- qbs %>%
+  filter(n_dropbacks > 200)%>%
+  left_join(teams_colors_logos, by = c('team' = 'team_abbr'))
 
 
 #FIGURE-------------------------------------------------------------------
-qbs <- qbs %>%
-  left_join(teams_colors_logos, by = c('team' = 'team_abbr'))
 
-qbs %>%
-  ggplot(aes(x = RB_per, y = TE_per)) +
-  #horizontal line with mean EPA
-  geom_hline(yintercept = mean(qbs$TE_per), color = "red", linetype = "dashed", alpha=0.5) +
-  #vertical line with mean CPOE
-  geom_vline(xintercept =  mean(qbs$RB_per), color = "blue", linetype = "dashed", alpha=0.5) +
-  #add points for the QBs with the right colors
-  #cex controls point size and alpha the transparency (alpha = 1 is normal)
-  geom_point(color = qbs$team_color, cex=qbs$n_dropbacks / 75, alpha = .6) +
-  #add names using ggrepel, which tries to make them not overlap
-  geom_text_repel(aes(label=passer)) +
-  #titles and caption
+ffplot <- qbs %>%
+  ggplot(aes(x = RB_per*100, y = TE_per*100)) +
+  geom_hline(yintercept = mean(qbs$TE_per)*100, color = "#f75ce5", linetype = "dashed", alpha=0.9) +
+  geom_vline(xintercept =  mean(qbs$RB_per)*100, color = "#f75ce5", linetype = "dashed", alpha=0.9) +
+  xlim(8, 35)+
+  #ylim(0,2.5)+
+  #geom_point(color = qbs$team_color3, cex=qbs$n_dropbacks / 75, alpha = .8) +
+  geom_image(aes(image = team_logo_espn), asp = 16 / 9)+
+  geom_text_repel(aes(label=passer),colour = "white",
+                  box.padding = unit(0.5, "lines"),
+                  alpha = 0.9,
+                  size = 3.5,) +
   labs(x = "% de pases dirigidos a RBs/FBs",
        y = "% de pases dirigidos a TEs",
-       title = "% de pases lanzados por posición del receptor (Temporada 2019-2020)",
-       subtitle = "El tamaño de las burbujas depende de la cantidad de pases lanzados",
-       caption = "Data: @nflfastR") +
-  #uses the black and white ggplot theme
-  theme_bw() +
-  #center title with hjust = 0.5
+       title = "% de pases lanzados por posición del receptor",
+       subtitle = "Solo 3 QB lanzan más a sus RBs y TEs que a sus WRs: Carson Wentz, Lamar Jackson, Kirk Cousins",
+       caption = "Temporada 2019-2020 | Consideramos QBs con más de 200 pases |
+       | Gráfica por Pablo L. Landeros |
+       | Datos: @nflfastR") +
+  dark_theme_gray() +
   theme(
-    plot.title = element_text(size = 14, hjust = 0.5, face = "bold")
-  ) +
-  #make ticks look nice
-  #if this doesn't work, `install.packages('scales')`
-  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
-  scale_x_continuous(breaks = scales::pretty_breaks(n = 10))
+    aspect.ratio = 9 / 16,
+    plot.title = element_text(size = 16, family = "Trebuchet MS",color = "white",hjust = 0),
+    plot.subtitle = element_text(size = 10, family = "Trebuchet MS",color = "white",hjust = 0),
+    axis.title = element_text(size = 9, family = "Trebuchet MS",color = "#adadad"),
+    plot.caption = element_text(size=8, family = "Trebuchet MS",color = "#adadad",hjust = 0),
+    #legend.text = element_text(size = 8, family = "Calibri",color = "#adadad"),
+    #legend.direction = "horizontal",
+    #legend.position = "bottom",
+    #legend.key.size =unit(.75,"line"),
+    axis.text = element_text(size = 9, family = "Trebuchet MS",color = "#adadad"),
+    panel.grid = element_line(size=.11))+
+  scale_y_continuous(labels=function(x) paste0(x,"%"),breaks = scales::pretty_breaks(n = 10)) +
+  scale_x_continuous(labels=function(x) paste0(x,"%"),breaks = scales::pretty_breaks(n = 10))
 
 
+ffplot
+ggsave(filename = here::here("/Desktop/GithubRepos/Experiments/NFL/Plots/ff_logo.png"), 
+       height = 6, width = 8)
 
 
 
