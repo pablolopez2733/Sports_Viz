@@ -1,0 +1,21 @@
+Rk,Squad,GF,GA,Pts
+1,Liverpool,85,33,99
+2,Manchester City,102,35,81
+3,Manchester Utd,66,36,66
+4,Chelsea,69,54,66
+5,Leicester City,67,41,62
+6,Tottenham,61,47,59
+7,Wolves,51,40,59
+8,Arsenal,56,48,56
+9,Sheffield Utd,39,39,54
+10,Burnley,43,50,54
+11,Southampton,51,60,52
+12,Everton,44,56,49
+13,Newcastle Utd,38,58,44
+14,Crystal Palace,31,50,43
+15,Brighton,39,54,41
+16,West Ham,49,62,39
+17,Aston Villa,41,67,35
+18,Bournemouth,40,65,34
+19,Watford,36,64,34
+20,Norwich City,26,75,21
