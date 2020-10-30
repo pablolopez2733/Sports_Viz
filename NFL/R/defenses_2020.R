@@ -1,3 +1,9 @@
+library(tidyverse)
+library(ggrepel)
+library(ggimage)
+library(nflfastR)
+library(dplyr)
+
 seasons <- 2020
 data <- map_df(seasons, function(x) {
   readRDS(
@@ -41,9 +47,17 @@ df %>%
   #titles and caption
   labs(x = "EPA/jugada permitido por tierra",
        y = "EPA/jugada permitido por aire",
-       title = "Defensa por aire y por tierra (2020)",
-       subtitle = "Semanas 1-7",
-       caption = "Data: @nflfastR") +
+       title = "Defensa por aire y por tierra ",
+       subtitle = "Semanas 1-7 | Temporada 2020-2021",
+       caption = "Data: @nflfastR | Gráfica: @Landeros_33") +
+  annotate(geom = "label", x = -.07, y = -.06,size=2.5,family = "Trebuchet MS",color = "green2",fill="black",
+           label = 'Buena vs Pase | Buena vs corrida')+
+  annotate(geom = "label", x = -.07, y = .23,size=2.5,family = "Trebuchet MS",color = "gold2",fill="black",
+           label = 'Mala vs Pase | Buena vs corrida')+
+  annotate(geom = "label", x = .03, y = -.06,size=2.5,family = "Trebuchet MS",color = "gold2",fill="black",
+           label = 'Buena vs Pase | Mala vs corrida')+
+  annotate(geom = "label", x = .03, y = .23,size=2.5,family = "Trebuchet MS",color = "red2",fill="black",
+           label = 'Mala vs Pase | Mala vs corrida')+
   theme_bw() +
   #center title
   theme(
@@ -55,3 +69,5 @@ df %>%
   scale_y_reverse(breaks = scales::pretty_breaks(n = 10))+
   scale_x_reverse(breaks = scales::pretty_breaks(n = 10))
 
+ggsave('C:/Users/pablo/Desktop/GithubRepos/Experiments/NFL/Plots/airvrush_def.png'
+       , height = 6, width = 8)
