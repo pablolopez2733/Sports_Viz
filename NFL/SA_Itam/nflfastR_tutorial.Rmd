@@ -1,0 +1,181 @@
+---
+title: "Introducción a datos de NFL con nflfastR"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+
+### Paquete creado por Ben Baldwin y Sebastian Carl
+
+
+Cargamos los paquetes necesarios para trabajar:
+```{r, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(ggrepel)
+library(ggimage)
+library(nflfastR)
+library(dplyr)
+
+```
+
+Por simplicidad analizaremos solo una temporada (2019).   
+
+Jalamos datos del 2019:
+```{r}
+seasons <- 2019
+pbp <- map_df(seasons, function(x) {
+  readRDS(
+    url(
+      paste0("https://raw.githubusercontent.com/guga31bb/nflfastR-data/master/data/play_by_play_",x,".rds")
+    )
+  )
+})
+
+head(pbp)
+```
+
+
+
+### ¿Que variables tenemos?
+```{r}
+colnames(pbp)
+```
+
+Está bien, pero medio desordenado. Mejora un poco si las ordeno por orden alfabético y las guardo en una variable para tenerlas a la mano.
+```{r}
+vars <- sort(names(pbp))
+vars
+```
+
+
+## Funciones básicas
+
+### **filter()** 
+
+Jugadas de los Cowboys donde hayan pasado en 3a oportunidad durante la semana 11:
+```{r}
+dallas <- pbp %>% 
+  filter(pass == 1 & down == 3 & posteam == "DAL"& week == 11)
+dallas
+```
+**Nota:** ¿Que pasa si quiero ver los equipos disponibles?
+```{r}
+unique(pbp$posteam)
+```
+
+
+### **select() **   
+
+Está bien pero tenemos muchísimas columnas, queremos menos información. Para esto sirve el select().
+Supongamos que solo quiero: la yarda en la que estaban, los equipos involucrados, y una descripción de la jugada. 
+```{r}
+dallas %>% select(posteam,defteam,yrdln,quarter_seconds_remaining,desc,)
+```
+
+
+### **mutate() y case_when()   ** 
+
+* mutate básicamente agrega una columna nueva a nuestro dataframe con datos de otras columnas.
+* case_when nos permite aplicar condiciones sobre otras columnas.
+* Combinados son realmente útiles. 
+
+
+Clasificar pases de Prescott en largos, cortos y medianos durante la semana 11:
+```{r}
+pases_prescott <- pbp %>% 
+  filter(pass == 1 & passer_player_name == "D.Prescott" & week == 11) %>% 
+  select(air_yards,time,qtr,yardline_100) %>% 
+  mutate(
+    depth = case_when(
+      air_yards < 0 ~ "Negative",
+      air_yards >= 0 & air_yards < 10 ~ "Short",
+      air_yards >= 10 & air_yards < 20 ~ "Medium",
+      air_yards >= 20 ~ "Deep"
+    )
+  )
+
+pases_prescott
+```
+
+#### Ejercicios
+* ¿Que tanto se la juega la liga? Buscar jugadas en 4ta que no sean equipos especiales.
+* Corridas de Derrick Henry de más de 10 yardas con su descripción y el tiempo que quedaba en el cuarto.
+* Intercepciones de los Jets o Browns entre las semanas 10 y 15 con su respectivos datos climatológicos.
+
+
+### **group_by y summarize**
+
+Para esto usaré un dataset distinto. Vamos a usar puras jugadas de corrida o pase que tengan el EPA disponible. 
+```{r}
+pbp_rp <- pbp %>%
+  filter(rush == 1 | pass == 1, !is.na(epa))
+```
+ * group_by
+ De las funciones más utilizadas en el mundo de Data Science. Como su nombre lo dice, agrupa según los datos que querramos. 
+ 
+* summarize
+Normalmente se usa en pareja con group_by y sirve (como su nombre lo dice) para resumir datos de interés una vez que se agrupó. 
+¿Por que?
+Si ya agrupé por equipo, tal vez me podría interesar la suma de yardas totales. 
+Si ya agrupé por jugador, tal vez me interesa el promedio de yardas ganadas por jugada.
+
+Con un ejemplo se entiende mejor.
+
+#### **¿ Cuáles son los mejores equipos por aire ?**
+
+Calcular yardas por aire por equipo
+```{r}
+pbp_rp %>% 
+  filter(pass == 1 & penalty == 0 & !is.na(air_yards)) %>% #porque penalty = 0 ?
+  group_by(posteam) %>% 
+  summarise(
+    air_yards = sum(air_yards)
+  ) %>% 
+  arrange(-air_yards)
+```
+
+
+
+#### **Juego terrestre de los Ravens**
+
+
+¿Quienes fueron los mejores corredores de Baltimore?
+
+```{r}
+rushes_ravens <- pbp_rp %>%
+    filter(posteam == "BAL", rush == 1) %>% #Corridas de Baltimore
+    group_by(rusher) %>% # Agrupamos los datos por corredores
+    summarize(
+      mean_epa = mean(epa),
+      yds_gained = sum(yards_gained),
+      success_rate = mean(success),
+      ypc=mean(yards_gained),
+      plays=n()
+      ) %>%
+    arrange(-mean_epa) %>%
+    filter(plays > 20) # quiero los que corrieron más de 20 snaps
+
+rushes_ravens
+```
+
+Chequen lo que pasa con Ingram y Lamar: Ingram tiene más yardas, pero Lamar tiene casi 3 veces más EPA.   
+
+#### **Un buen ejercicio: **
+
+Ahora que ya tenemos todas las herramientas, podemos intentar ver que pasa con nuestros equipos en su juego aéreo bajo ciertas condiciones. El ejercicio es el siguiente: **¿Qué equipos son los que más pasan durante la primera mitad en "early downs" cuando su probabilidad de victoria está entre 80 y 20 y excluyendo los últimos dos minutos (por que ahí todo mundo se pone a lanzar)?**
+
+¿Voluntarios? :D
+
+
+## Una gráfica para las defensas
+¿Que tal si queremos darnos una idea de como le ha ido a las defensas este año?
+Concretamente compararlas en corrida vs en pase.
+
+
+![defenses_2020](https://github.com/pablolopez2733/Analytics-Experiments/blob/master/NFL/Plots/airvrush_def.png?raw=true)
+
+Construyamos la solución:
+
+
