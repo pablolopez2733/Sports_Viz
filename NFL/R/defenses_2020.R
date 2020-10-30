@@ -39,17 +39,19 @@ df %>%
   #add points for the QBs with the logos
   geom_image(aes(image = team_logo_espn),asp = 16 / 9) +
   #titles and caption
-  labs(x = "AVG Rush EPA per play allowed",
-       y = "AVG Air EPA per play allowed",
-       title = "Passing and Rushing Defense through 2020",
+  labs(x = "EPA/jugada permitido por tierra",
+       y = "EPA/jugada permitido por aire",
+       title = "Defensa por aire y por tierra (2020)",
+       subtitle = "Semanas 1-7",
        caption = "Data: @nflfastR") +
   theme_bw() +
   #center title
   theme(
     aspect.ratio = 9 / 16,
-    plot.title = element_text(size = 14, hjust = 0.5, face = "bold")
+    plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(size = 10, hjust = 0.5, face = "bold")
   ) +
   #make ticks look nice
-  scale_y_continuous(breaks = scales::pretty_breaks(n = 10)) +
-  scale_x_continuous(breaks = scales::pretty_breaks(n = 10))
+  scale_y_reverse(breaks = scales::pretty_breaks(n = 10))+
+  scale_x_reverse(breaks = scales::pretty_breaks(n = 10))
 
