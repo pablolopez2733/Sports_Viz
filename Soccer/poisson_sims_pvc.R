@@ -1,7 +1,11 @@
 library(dplyr)
 library(ggplot2)
 library(ggimage)
-
+library(tidyverse)
+library(gganimate)
+library(gifski)
+library(janitor)
+library(shadowtext)
 
 #Pumas vs azul
 #adjusting for h2h record:
@@ -51,7 +55,7 @@ sim_matches <- function(n){
 #------------------------------------------------------------------------------
 
 #simulamos 10000 veces
-simulacion <- sim_matches(10000)
+simulacion <- sim_matches(100)
 tabla <- as.data.frame(table(simulacion$avanza))
 
 #para animar:
@@ -60,22 +64,39 @@ simulacion <- simulacion %>%
          vic_caz = cumsum(caz.w))
 
 
-#graficas-----------------------------------------------------
-ggplot(simulacion,aes(x=avanza))+
-  geom_bar(stat="count", width=0.7, fill=c("#2331e5","#cbab57"))+
-  theme_minimal()
-
 
 #gif:------------------------------------------------------------------------
 pumas <- as.data.frame(cbind(simulacion$iteracion,simulacion$vic_pumas))
 caz <- as.data.frame(cbind(simulacion$iteracion,simulacion$vic_caz))
-pumas$logo <- "https://upload.wikimedia.org/wikipedia/en/thumb/2/25/UNAM_Pumas.svg/800px-UNAM_Pumas.svg.png"
-caz$logo <- "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Escudo_del_Cruz_Azul_AC.svg/800px-Escudo_del_Cruz_Azul_AC.svg.png"
+pumas$logo <- "#303af1"
+caz$logo <- "cbab57"
+pumas$equipo <- "UNAM"
+caz$equipo <- "CAZ"
 
-#hacerlo
+df_gif <- as.data.frame(rbind(pumas,caz))
+colnames(df_gif) <- c("iteracion","wins","logo","equipo")
+
+cols.num <- c("iteracion","wins")
+df_gif[cols.num] <- sapply(df_gif[cols.num],as.numeric)
+sapply(df_gif, class)
+
+#con menos numeros
+iters <- seq(from = 0, to = 100, by = 5)
+r_df <- df_gif[df_gif$iteracion %in% iters,]
 
 
-
-
-# Save at gif:
-anim_save("288-animated-barplot-transition.gif")
+#PLOT
+ggplot(data = df_gif,
+       mapping = aes(x=iteracion,
+                     y=wins,
+                     group = equipo))+
+  geom_point()+
+  scale_x_continuous(limits = c(0,max(df_gif$iteracion)))+
+  shadowtext::geom_shadowtext(data = df_gif,
+                              mapping = aes(x=iteracion,
+                                            y=wins,
+                                            label = equipo),
+                              hjust=-0.1, vjust = 0, bg.color = "black")+
+  coord_cartesian(clip = "off") +
+  transition_reveal(iteracion)
+#colors "#cbab57" "#303af1"
