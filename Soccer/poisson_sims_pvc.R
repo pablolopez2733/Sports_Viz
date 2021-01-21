@@ -12,9 +12,9 @@ library(ggthemes)
 #Pumas vs azul
 #adjusting for h2h record:
 set.seed(33)
-goles <- c(0,1,2,3,4,5,6,7)
-g_pumas <- dpois(goles, 2.422508)
-g_caz <- dpois(goles, 2.694507644)
+goles <- c(0,1,2,3,4,5,6,7) #vector de goles a muestrear
+g_pumas <- dpois(goles, 2.422508) #UNAM anota segun Po(2.42)
+g_caz <- dpois(goles, 2.694507644) #CAZ anota segun Po(2.42)
 
 #funcion para simular partidos---------------------------------------------
 sim_matches <- function(n){
@@ -60,14 +60,14 @@ sim_matches <- function(n){
 simulacion <- sim_matches(10000)
 tabla <- as.data.frame(table(simulacion$avanza))
 
-#para animar:
+# para poder animar:
 simulacion <- simulacion %>%
   mutate(vic_pumas = cumsum(unam.w),
          vic_caz = cumsum(caz.w))
 
 
 
-#gif:------------------------------------------------------------------------
+# cosas necesarias para el gif:--------------------------------------------------
 pumas <- as.data.frame(cbind(simulacion$iteracion,simulacion$vic_pumas))
 caz <- as.data.frame(cbind(simulacion$iteracion,simulacion$vic_caz))
 pumas$logo <- "#303af1"
@@ -82,7 +82,7 @@ cols.num <- c("iteracion","wins")
 df_gif[cols.num] <- sapply(df_gif[cols.num],as.numeric)
 sapply(df_gif, class)
 
-#con menos numeros
+#con menos numeros, no fue necesario alv
 iters <- seq(from = 0, to = 10000, by = 500)
 r_df <- df_gif[df_gif$iteracion %in% iters,]
 
